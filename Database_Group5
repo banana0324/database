@@ -1,0 +1,33 @@
+----------------------查詢組1----------------------
+--優化前
+SELECT * FROM MASTER M, DETAIL D;
+--優化後
+SELECT m.country,d.coordinates FROM MASTER M LEFT JOIN DETAIL D ON M.iau_id=d.iau_id;
+
+----------------------查詢組2----------------------
+--優化前
+SELECT * FROM DETAIL D
+INNER JOIN MASTER M ON D.iau_id=M.iau_id
+WHERE D.year between '1990' AND '2022';
+--優化後
+SELECT * FROM DETAIL D 
+WHERE iau_id 
+IN(
+    SELECT iau_id 
+    FROM MASTER
+    WHERE year BETWEEN '1990' AND '2022')
+    
+----------------------查詢組3----------------------
+--優化前
+SELECT M.iau_id ,SUM(d.students5_estimated) AS total_estimated
+FROM MASTER M
+LEFT JOIN DETAIL D ON D.iau_id=M.iau_id
+GROUP BY M.iau_id
+--優化後
+SELECT group_iau_id,total_estimated 
+FROM MASTER M 
+INNER JOIN(
+    SELECT iau_id AS group_iau_id,SUM(D.students5_estimated) AS total_estimated
+    FROM Detail D 
+    GROUP BY iau_id
+    ) Detail ON M.iau_id=Detail.group_iau_id
